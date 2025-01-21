@@ -2,6 +2,7 @@ import { client } from "@/sanity/lib/client";
 import { urlFor } from "@/sanity/lib/image";
 import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import Link from "next/link";
 
 interface Car {
   _id: string;
@@ -185,13 +186,13 @@ export default async function Payment({
                     />
                   </div>
                 </div>
-
-                <button
+                     
+                <Link href={"/admin"}
                   type="submit"
                   className="w-full bg-[#3563e9] hover:bg-[#264ac6] text-white py-4 rounded-lg mt-4 transition-all"
                 >
                   Confirm Payment
-                </button>
+                </Link>
               </form>
             </CardContent>
           </Card>
