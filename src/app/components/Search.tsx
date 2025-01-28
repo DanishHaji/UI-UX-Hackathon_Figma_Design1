@@ -1,67 +1,149 @@
-import { useRouter } from 'next/router';
-import React, { useEffect, useState } from 'react';
-import { client } from '@/sanity/lib/client'; // Sanity client
-import { urlFor } from '@/sanity/lib/image';
+'use client';
+
+import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { urlFor } from '@/sanity/lib/image';
 
-// Define the Car interface
-interface Car {
-  id: string;
+interface simplifiedCar {
+  _id: string;
   name: string;
-  category: {
-    name: string;
-  };
-  slug: string;
-  image: {
-    asset: {
-      url: string;
-    };
-  };
+  type: string;
+  slug: { current: string };
+  image: string;
+  fuelCapacity: string;
+  transmission: string;
+  seatingCapacity: string;
+  pricePerDay: string;
 }
 
-const Search = () => {
-  const [cars, setCars] = useState<Car[]>([]); // Explicitly type the state
-  const [filteredCars, setFilteredCars] = useState<Car[]>([]); // Explicitly type the filtered state
-  const router = useRouter();
-  const { query } = router.query;
+interface SearchProps {
+  data: simplifiedCar[];
+}
 
-  useEffect(() => {
-    const fetchCars = async () => {
-      const carQuery = `*[_type == "car"]{id, name, category-> {name}, "slug": slug.current, image {asset->{url}}}`;
-      const data: Car[] = await client.fetch(carQuery); // Type the fetched data as Car[]
-      setCars(data);
-    };
-    fetchCars();
-  }, []);
+export default function Search({ data }: SearchProps) {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredCars, setFilteredCars] = useState<simplifiedCar[]>([]);
 
-  useEffect(() => {
-    if (query) {
-      const filtered = cars.filter((car) => car.name.toLowerCase().includes(query.toString().toLowerCase()));
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+
+    if (query.trim()) {
+      const filtered = data.filter((car) =>
+        car.name.toLowerCase().includes(query.toLowerCase())
+      );
       setFilteredCars(filtered);
     } else {
-      setFilteredCars(cars);
+      setFilteredCars([]);
+      setSearchQuery('');
     }
-  }, [query, cars]);
+  };
 
   return (
-    <div>
-      <h1>Search Results</h1>
-      {filteredCars.length > 0 ? (
-        filteredCars.map((car) => (
-          <div key={car.id}>
-            <h2>{car.name}</h2>
-            <Image src={urlFor(car.image).url()} alt={car.name} width={100} height={100} />
-            <Link href={`/cars/${car.slug}`}>
-              <a>View Car</a>
-            </Link>
+    <div className="relative w-full md:w-[492px]">
+      {/* Search Icon */}
+      <Image
+        src="/search-normal.png"
+        alt="Search"
+        width={24}
+        height={24}
+        className="absolute top-1/2 left-3 transform -translate-y-1/2"
+      />
+
+      {/* Search Input */}
+      <input
+        type="text"
+        value={searchQuery}
+        onChange={handleSearch}
+        placeholder="Search for a car..."
+        className="border-2 border-[#e7eef6] w-full h-[44px] rounded-full p-2 pl-10 pr-12 focus:outline-none focus:border-[#3563e9]"
+      />
+
+      {/* Search Results */}
+      {searchQuery && filteredCars.length > 0 && (
+        <div className="absolute z-50 w-full mt-2 bg-white rounded-lg shadow-lg border border-[#e7eef6] max-h-[400px] overflow-y-auto">
+          <div className="p-4">
+            {filteredCars.map((car) => (
+              <Card
+                key={car._id}
+                className="mb-4 shadow-lg border rounded-md p-2 hover:bg-gray-100"
+              >
+                <CardHeader>
+                  <CardTitle className="flex justify-between items-center">
+                    {car.name}
+                    <Image
+                      src="/heart.png"
+                      alt="Favorite"
+                      width={20}
+                      height={20}
+                    />
+                  </CardTitle>
+                  <CardDescription>{car.type}</CardDescription>
+                </CardHeader>
+                <CardContent className="flex flex-col items-center gap-4">
+                  <Image
+                    src={urlFor(car.image).url()}
+                    alt={car.name}
+                    width={220}
+                    height={68}
+                  />
+                  <div className="flex justify-between w-full text-sm">
+                    <div className="flex items-center gap-2">
+                      <Image
+                        src="/gas-station.png"
+                        alt="Fuel Capacity"
+                        width={26}
+                        height={24}
+                      />
+                      <span>{car.fuelCapacity}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Image
+                        src="/Caricon.png"
+                        alt="Transmission"
+                        width={26}
+                        height={24}
+                      />
+                      <span>{car.transmission}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Image
+                        src="/profile-2user.png"
+                        alt="Seating Capacity"
+                        width={26}
+                        height={24}
+                      />
+                      <span>{car.seatingCapacity}</span>
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter className="flex justify-between items-center">
+                  <p>
+                    {car.pricePerDay}/<span className="text-gray-500">day</span>
+                  </p>
+                  <Link href={`/categories/${car.slug.current}`}>
+                    <button
+                      className="bg-[#3563e9] p-2 text-white rounded-md"
+                      onClick={() => setSearchQuery('')}
+                    >
+                      Rent Now
+                    </button>
+                  </Link>
+                </CardFooter>
+              </Card>
+            ))}
           </div>
-        ))
-      ) : (
-        <p>No cars found for the search query.</p>
+        </div>
+      )}
+
+      {/* No Results Message */}
+      {searchQuery && filteredCars.length === 0 && (
+        <div className="absolute z-50 w-full mt-2 bg-white rounded-lg shadow-lg border border-[#e7eef6] p-4 text-center">
+          No cars found matching &quot{searchQuery}&quot
+        </div>
       )}
     </div>
   );
-};
-
-export default Search;
+}

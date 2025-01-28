@@ -124,7 +124,7 @@ export default async function Home() {
       </section>
 
       <section className="button w-full text-center">
-        <Link href={"/"}>
+        <Link href={"/categories"}>
           <button className="bg-[#3563e9] px-4 py-2 text-white rounded-md mt-5 hover:bg-[#1e50c2] transition-all">
             Show More Cars
           </button>

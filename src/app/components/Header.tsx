@@ -1,23 +1,84 @@
-import React from 'react';
-import { FaHeart, FaBell, FaSearch, FaCog } from 'react-icons/fa';
+"use client";
+import React, { useEffect, useState } from "react";
+import { FaHeart, FaBell, FaSearch, FaCog } from "react-icons/fa";
 import { VscSettings } from "react-icons/vsc";
-import Image from 'next/image';
-import Link from 'next/link';
+import Image from "next/image";
+import Link from "next/link";
+import { client } from "@/sanity/lib/client";
+
+interface simplifiedCar {
+  _id: string;
+  name: string;
+  type: string;
+  slug: {
+    current: string;
+  };
+  image: { asset: { url: string } };
+  fuelCapacity: string;
+  transmission: string;
+  seatingCapacity: string;
+  pricePerDay: string;
+}
+
+async function getData() {
+  const query = `*[_type == "car"]{
+    _id,
+    name,
+    type,
+    slug,
+    image{
+      asset->{url}
+    },
+    fuelCapacity,
+    transmission,
+    seatingCapacity,
+    pricePerDay
+  }`;
+  const data = await client.fetch(query);
+  return data;
+}
 
 const Header = () => {
+  const [data, setData] = useState<simplifiedCar[]>([]);
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [filteredResults, setFilteredResults] = useState<simplifiedCar[]>([]);
+
+  // Fetch data on mount
+  useEffect(() => {
+    const fetchData = async () => {
+      const fetchedData = await getData();
+      setData(fetchedData);
+      setFilteredResults(fetchedData); // Default results
+    };
+
+    fetchData();
+  }, []);
+
+  // Filter results when the search query changes
+  useEffect(() => {
+    const results = data.filter((car) =>
+      car.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    setFilteredResults(results);
+  }, [searchQuery, data]);
+
   return (
     <header className="bg-white py-4 px-4 md:px-8 shadow-md flex flex-wrap items-center justify-between">
       {/* Logo and Search Bar Container */}
       <div className="flex flex-row items-center justify-between w-full sm:w-auto space-x-4 lg:space-x-20">
         {/* Logo */}
-        <Link href='/'>
-          <div className="text-xl md:text-2xl font-sans font-bold text-[32px] text-blue-600">MORENT</div>
+        <Link href="/">
+          <div className="text-xl md:text-2xl font-sans font-bold text-[32px] text-blue-600">
+            MORENT
+          </div>
         </Link>
+
         {/* Search Bar */}
         <div className="relative w-full sm:w-[492px] h-[44px] mt-2 sm:mt-0">
           <input
             type="text"
-            aria-label='button'
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search something here"
             className="w-full h-full border rounded-full py-2 px-4 pl-12 pr-12 text-sm border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
@@ -27,6 +88,30 @@ const Header = () => {
           <div className="absolute text-2xl right-4 top-1/2 transform -translate-y-1/2 text-gray-500">
             <VscSettings />
           </div>
+
+          {/* Search Results Dropdown */}
+          {searchQuery && (
+            <div className="absolute mt-2 w-full bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto z-10">
+              {filteredResults.length > 0 ? (
+                filteredResults.map((car) => (
+                  <Link key={car._id} href={`/car/${car.slug.current}`}>
+                    <div className="p-2 hover:bg-gray-100 cursor-pointer flex items-center space-x-4">
+                      <Image
+                        src={car.image.asset.url}
+                        alt={car.name}
+                        width={40}
+                        height={40}
+                        className="rounded"
+                      />
+                      <span>{car.name}</span>
+                    </div>
+                  </Link>
+                ))
+              ) : (
+                <div className="p-2 text-gray-500">No results found</div>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

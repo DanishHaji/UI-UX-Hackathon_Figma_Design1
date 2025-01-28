@@ -1,44 +1,34 @@
 import { useState } from 'react';
 
 interface FilterProps {
-  onFilterChange: (filters: { type: string[]; seatingCapacity: string[]; fuelCapacity: string[] }) => void;
+  onFilterChange: (filters: Filters) => void;
+}
+
+interface Filters {
+  type: string[];
+  seatingCapacity: string[];
+  fuelCapacity: string[];
+  [key: string]: string[]; // Index signature allows dynamic keys
 }
 
 const FilterComponent: React.FC<FilterProps> = ({ onFilterChange }) => {
-  // Define the state with an explicit type
-  const [filters, setFilters] = useState<{
-    type: string[];
-    seatingCapacity: string[];
-    fuelCapacity: string[];
-  }>({
+  const [filters, setFilters] = useState<Filters>({
     type: [],
     seatingCapacity: [],
     fuelCapacity: [],
   });
 
-  // Update the filters state and pass the updated filters to the parent
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, checked } = e.target;
+    const updatedFilters: Filters = { ...filters };
 
-    // Create a copy of the filters object
-    const updatedFilters = { ...filters };
-
-    // Update the appropriate filter array based on the checkbox
     if (checked) {
-      updatedFilters[name as keyof typeof filters] = [
-        ...updatedFilters[name as keyof typeof filters],
-        value,
-      ];
+      updatedFilters[name] = [...updatedFilters[name], value];
     } else {
-      updatedFilters[name as keyof typeof filters] = updatedFilters[
-        name as keyof typeof filters
-      ].filter((item) => item !== value);
+      updatedFilters[name] = updatedFilters[name].filter((item) => item !== value);
     }
 
-    // Set the updated filters state
     setFilters(updatedFilters);
-
-    // Pass the updated filters to the parent component
     onFilterChange(updatedFilters);
   };
 
@@ -46,7 +36,6 @@ const FilterComponent: React.FC<FilterProps> = ({ onFilterChange }) => {
     <div className="filter-component flex flex-col gap-10 p-10">
       <h3 className="text-4xl text-[#3563e9] font-bold">Filter by</h3>
 
-      {/* Type Filter */}
       <div className="flex flex-col gap-5">
         <h4 className="text-2xl text-gray-500">Type</h4>
         <div className="flex flex-col gap-4">
@@ -80,9 +69,8 @@ const FilterComponent: React.FC<FilterProps> = ({ onFilterChange }) => {
         </div>
       </div>
 
-      {/* Seating Capacity Filter */}
       <div className="flex flex-col gap-5">
-        <h4 className="text-2xl text-gray-500">Seating Capacity</h4>
+        <h4 className="text-2xl text-gray-500">Capacity</h4>
         <div className="flex flex-col gap-4">
           <label>
             <input
@@ -112,39 +100,37 @@ const FilterComponent: React.FC<FilterProps> = ({ onFilterChange }) => {
             5 People
           </label>
         </div>
-      </div>
-
-      {/* Fuel Capacity Filter */}
-      <div className="flex flex-col gap-5">
-        <h4 className="text-2xl text-gray-500">Fuel Capacity</h4>
-        <div className="flex flex-col gap-4">
-          <label>
-            <input
-              type="checkbox"
-              name="fuelCapacity"
-              value="50L"
-              onChange={handleFilterChange}
-            />{" "}
-            50L
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              name="fuelCapacity"
-              value="70L"
-              onChange={handleFilterChange}
-            />{" "}
-            70L
-          </label>
-          <label>
-            <input
-              type="checkbox"
-              name="fuelCapacity"
-              value="60L"
-              onChange={handleFilterChange}
-            />{" "}
-            60L
-          </label>
+        <div className="flex flex-col gap-5">
+          <h4 className="text-2xl text-gray-500">Fuel Capacity</h4>
+          <div className="flex flex-col gap-4">
+            <label>
+              <input
+                type="checkbox"
+                name="fuelCapacity"
+                value="50L"
+                onChange={handleFilterChange}
+              />{" "}
+              50L
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                name="fuelCapacity"
+                value="70L"
+                onChange={handleFilterChange}
+              />{" "}
+              70L
+            </label>
+            <label>
+              <input
+                type="checkbox"
+                name="fuelCapacity"
+                value="90L"
+                onChange={handleFilterChange}
+              />{" "}
+              90L
+            </label>
+          </div>
         </div>
       </div>
     </div>
